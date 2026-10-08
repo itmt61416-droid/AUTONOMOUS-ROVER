@@ -1,64 +1,68 @@
-# Rover Mission Control
+# Rover dashboard backend
 
-A small, GitHub-ready Flask dashboard for the autonomous rover. The first vertical slice runs without hardware: a telemetry simulator feeds a shared JSON contract, Flask serves that contract, and the dashboard renders live state, sensors, a distance chart, and system events.
+This Flask app serves the supplied dashboard at `/`, serves its camera element at `/video_feed`, and exposes the API used by the supplied `dashboard.js`. The uploaded HTML and JavaScript are copied without frontend logic changes. The upload did not include `static/css/style.css`, which the HTML references; the page still loads, but that stylesheet must be supplied for the friend's intended styling.
 
-## Architecture and authority
-
-```text
-Phone camera → OpenCV vision on laptop → F / L / R / S decision → ESP32 → motors
-                                                                  │
-                                  sensors / encoders telemetry ───┘
-                                             ↓
-                                      Flask mission control → browser dashboard
-```
-
-- **Vision/laptop** detects the line and AprilTags and selects F/L/R/S.
-- **ESP32** remains the authority for motor actuation, emergency stop, and immediate obstacle safety.
-- **Flask** transports, validates, and presents telemetry. The browser sends only mission-level start, pause, resume, and stop actions.
-- **Dashboard** visualizes state; it does not decide steering or bypass ESP32 safety.
-
-The initial controller is deliberately a software boundary. Do not connect browser buttons directly to motor pins. Add and review the laptop-to-ESP32 adapter only after the physical stop and obstacle behavior have been tested.
-
-## Run locally (Windows PowerShell)
+## Start it
 
 ```powershell
-cd rover-dashboard
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python app.py
+py -m pip install -r requirements.txt
+py app.py
 ```
 
-Open <http://127.0.0.1:5000>. The simulator starts automatically and publishes new samples twice per second. No camera or rover is required. Stop the server with Ctrl+C.
+Open `http://localhost:5000`. To open it from a phone or another computer on the same Wi-Fi, use the laptop's LAN IP and allow Python through the private-network firewall. Mock telemetry is on by default. To use real ESP32 telemetry, set `ROVER_MOCK_TELEMETRY=0` before starting Flask. The browser reports the rover offline after three seconds without an ESP32 update (`ROVER_TELEMETRY_TIMEOUT` can change this). `/video_feed` displays a placeholder until a camera index is configured; install `opencv-python` and set `ROVER_CAMERA_INDEX=0` to use a camera available to the Flask host.
 
-To run Flask without automatic simulation, set `ROVER_SIMULATOR=0` before starting; post `{"enabled":true}` to `/api/v1/simulator` when you want to resume it. This is useful when a real telemetry bridge is ready.
+## Frontend contract
 
-## Current API
+The supplied JavaScript calls these endpoints on the same origin. For POST requests it sends `Content-Type: application/json`; it only checks HTTP success and does not read the response body.
 
-See [docs/API.md](docs/API.md) for the canonical contract, endpoints, examples, and validation rules. Dashboard implementation belongs in `templates/` and `static/`; API and integration logic belongs in `app.py` and `rover/`.
+| Method and path | Request JSON | Response JSON / behavior |
+|---|---|---|
+| `GET /api/telemetry` | none | Telemetry object documented below. `online` controls the dashboard connection indicator. |
+| `POST /api/mission` | `{ "action": "set_destination", "x": 0..10, "y": 0..10 }` | `{ "ok": true, "mission": { "status": "READY", "x": number, "y": number } }` |
+| `POST /api/mission` | `{ "action": "start", "x": 0..10, "y": 0..10 }` | Sets mission to RUNNING in AUTO mode; returns `{ "ok": true, "mission": { ... } }`. Coordinates are optional if already set. |
+| `POST /api/mission` | `{ "action": "stop" }` | Stops mission and sets command to S; returns `{ "ok": true, "mission": { ... } }`. |
+| `POST /api/mode` | `{ "mode": "AUTO" }` or `{ "mode": "MANUAL" }` | `{ "ok": true, "mode": "AUTO"|"MANUAL", "command": "S" }`; changing mode always stops movement. |
+| `POST /api/control` | `{ "command": "F"|"B"|"L"|"R"|"S", "mode": "MANUAL" }` | `{ "ok": true, "command": "...", "mode": "MANUAL" }`. Non-stop movement is rejected unless manual mode is active. |
+| `GET /video_feed` | none | MJPEG multipart stream used by the HTML `<img>`. Placeholder by default; live host camera is optional as described above. |
 
-## Team split
+All invalid requests return `{ "ok": false, "error": "reason" }` with a 4xx status. The dashboard only checks success status for its POST requests.
 
-- **Frontend teammate:** `templates/`, `static/`; consume only documented `/api/v1` endpoints. Keep dashboard-only changes in a `feat/dashboard-...` branch.
-- **Integration/backend owner:** `app.py`, `rover/`, API contract changes in `docs/API.md`; use `feat/telemetry-...` or `feat/esp32-...` branches.
-- **Shared:** `README.md`, `docs/PROJECT_STATUS.md`, and this workflow. Update status when a feature is merged or its owner changes.
+### Telemetry shape
 
-## GitHub workflow (both teammates)
+```json
+{
+  "online": true,
+  "mode": "AUTO",
+  "command": "S",
+  "speed": 0,
+  "distance": 0,
+  "ultrasonic": { "front": 82.4, "left": 65.1, "right": 91, "rear": 110 },
+  "ir": { "left": 0, "center": 0, "right": 0, "path": "STRAIGHT" },
+  "encoder": { "left": 0, "right": 0 },
+  "mpu": { "heading": 0, "orientation": "NORTH" },
+  "apriltag": { "detected": false, "id": null },
+  "navigation": { "stage": "START", "status": "READY", "obstacleState": "PATH CLEAR", "courseCorrection": "NOT ACTIVE" },
+  "safety": { "status": "CLEAR" },
+  "movement": "STOP",
+  "mission": { "status": "READY", "x": 8, "y": 8 }
+}
+```
 
-1. One teammate creates the GitHub repository and pushes this folder as the initial `main` branch. Add the other teammate as a collaborator.
-2. Keep `main` runnable. Before starting work: `git switch main`, `git pull`, then `git switch -c feat/short-task-name`.
-3. Commit a focused change with a clear message, for example `feat: render live obstacle telemetry`.
-4. Push the branch: `git push -u origin feat/short-task-name`; open a Pull Request into `main` and describe the visible behavior and any API change.
-5. The other teammate reviews the diff and confirms the documented contract still matches. Merge the PR, then both teammates pull `main` before starting the next task.
-6. Avoid working simultaneously in the same files. If an API change is needed, agree on the contract first and update `docs/API.md` in the same PR.
+The dashboard also accepts common aliases (`sensors` for `ultrasonic`, `orientation` for `mpu`, `aprilTag` for `apriltag`) and flat distance/sensor values. ESP32 updates may use either nested groups or flat `front`, `left`, `right`, `rear`, `irLeft`, `irCenter`, and `irRight` values.
 
-Never commit `.venv/`, secrets, camera credentials, or local machine configuration. Use `git status` before committing and pull before pushing. Do not force-push shared branches.
+## ESP32 interface
 
-## Next integration milestones
+1. Push a telemetry JSON object every 250–1000 ms to `POST http://<laptop-ip>:5000/api/telemetry/update`.
+2. Poll `GET http://<laptop-ip>:5000/api/esp32/command` every 100–200 ms. Response: `{ "seq": 12, "mode": "MANUAL", "command": "F", "mission": { "status": "STOPPED", "x": 8, "y": 8 } }`.
+3. Act only on a new `seq`. Apply a short motor command lease (for example, stop if no fresh command arrives for 500 ms), honor `S` immediately, and retain ESP32 obstacle/emergency-stop interlocks. The Flask process does not directly drive GPIO or motors.
 
-1. Agree on the actual ESP32 telemetry transport (USB serial or Wi-Fi) and its message format.
-2. Implement a laptop-side bridge/adapter that converts ESP32 and OpenCV readings into the schema in `docs/API.md`, then posts `/api/v1/telemetry`.
-3. Add real camera frames using a dedicated stream endpoint; keep image transport separate from the small telemetry JSON.
-4. Validate physical E-stop, link-loss stop, and obstacle behavior on the ESP32 before any powered rover test.
+The ESP32 and laptop must be on the same reachable network. Use the laptop's LAN IP, not `localhost`, in ESP32 firmware. Commands and mission coordinates are currently process-memory state and reset when Flask restarts; this is appropriate for integration but not persistent mission storage.
 
-See [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for ownership and the current checklist.
+## Combination sequence
+
+1. Start Flask with mock telemetry and open the dashboard. Confirm live values, `CONNECTED`, and that the page polls without errors.
+2. Use AUTO mode, set a waypoint, start, then stop. Confirm the mission endpoint accepts each action and the ESP32 command endpoint reports the new state/sequence.
+3. Switch to MANUAL, test each direction briefly with wheels raised, and confirm releasing a button sends `S`. Verify AUTO mode rejects motion and the ESP32 hardware stop remains authoritative.
+4. Set `ROVER_MOCK_TELEMETRY=0`; post a sample JSON payload to `/api/telemetry/update` and confirm the dashboard updates and remains online.
+5. Replace sample updates with actual ultrasonic, encoder, IR, IMU, and tag values. Then point ESP32 command polling at `/api/esp32/command` and connect motor commands only after the raised-wheel stop test passes.
+6. Configure `ROVER_CAMERA_INDEX` if the Flask host has a camera, or have the ESP32/vision computer publish frames through a future camera adapter. The current REST API does not transmit camera frames.
