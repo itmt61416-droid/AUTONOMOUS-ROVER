@@ -1,303 +1,1515 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Syntax Squad | Autonomous Rover</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <meta
+        name="description"
+        content="Syntax Squad autonomous indoor rover control and telemetry dashboard"
+    >
+
+    <meta name="theme-color" content="#060b12">
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
 </head>
 
-<body>
+<body data-mode="auto">
 
-<header class="topbar">
+    <!-- =========================================================
+         TOP HEADER
+    ========================================================== -->
+    <header class="topbar">
 
-    <div class="brand">
-        <div class="brand-icon">S</div>
+        <div class="brand">
+            <div class="brand-mark">SR</div>
 
-        <div>
-            <h1>SYNTAX SQUAD</h1>
-            <p>VISION-ASSISTED AUTONOMOUS ROVER</p>
-        </div>
-    </div>
-
-    <div class="system-state">
-
-        <div class="status-dot"></div>
-
-        <div>
-            <strong id="systemStatus">SYSTEM ONLINE</strong>
-            <small>AUTONOMOUS MODE</small>
+            <div class="brand-text">
+                <div class="brand-title">SYNTAX SQUAD</div>
+                <div class="brand-subtitle">
+                    AUTONOMOUS ROVER CONTROL
+                </div>
+            </div>
         </div>
 
-    </div>
+        <div class="topbar-status">
 
-</header>
-
-
-<main class="dashboard">
-
-    <!-- CAMERA -->
-
-    <section class="card camera-card">
-
-        <div class="card-header">
-
-            <div>
-                <span class="eyebrow">VISION SYSTEM</span>
-                <h2>Live Camera</h2>
+            <div class="connection-indicator" id="connection">
+                <span class="status-dot"></span>
+                <span id="systemStatus">CONNECTING</span>
             </div>
 
-            <span class="live-badge">
-                ● LIVE
-            </span>
+            <div class="mode-badge" id="modeBadge">
+                AUTO
+            </div>
 
         </div>
 
-        <div class="camera-container">
+    </header>
 
-            <div class="camera-placeholder">
 
-                <div class="camera-icon">◉</div>
+    <!-- =========================================================
+         MAIN DASHBOARD
+    ========================================================== -->
+    <main class="dashboard">
 
-                <h3>VISION FEED</h3>
+
+        <!-- =====================================================
+             CONTROL MODE
+        ====================================================== -->
+        <section class="mode-control-card card">
+
+            <div class="mode-control-info">
+                <div class="section-eyebrow">
+                    CONTROL SYSTEM
+                </div>
+
+                <h2>Rover Control Mode</h2>
 
                 <p>
-                    OpenCV camera stream will appear here
+                    Select autonomous mission control or manual rover
+                    control.
                 </p>
+            </div>
 
-                <span>
-                    Waiting for camera connection
-                </span>
+            <div class="mode-switch">
+
+                <button
+                    type="button"
+                    id="autoMode"
+                    class="mode-switch-button active"
+                >
+                    <span class="mode-button-dot"></span>
+                    AUTO
+                </button>
+
+                <button
+                    type="button"
+                    id="manualMode"
+                    class="mode-switch-button"
+                >
+                    <span class="mode-button-dot"></span>
+                    MANUAL
+                </button>
 
             </div>
 
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ROVER STATUS -->
+        <!-- =====================================================
+             MISSION OVERVIEW
+        ====================================================== -->
+        <section class="mission-bar card">
 
-    <section class="card status-card">
+            <div class="mission-info">
 
-        <div class="card-header">
+                <div class="section-eyebrow">
+                    CURRENT MISSION
+                </div>
 
-            <div>
-                <span class="eyebrow">ROVER</span>
-                <h2>System Status</h2>
+                <div class="mission-route">
+                    <span>POINT A</span>
+
+                    <span class="route-arrow">→</span>
+
+                    <span>POINT B</span>
+                </div>
+
+                <div
+                    class="mission-state"
+                    id="missionState"
+                >
+                    READY
+                </div>
+
             </div>
 
-        </div>
+            <div class="mission-progress">
 
+                <div class="progress-header">
 
-        <div class="command-display">
+                    <span>MISSION PROGRESS</span>
 
-            <span>CURRENT COMMAND</span>
+                    <strong id="missionProgress">
+                        0%
+                    </strong>
 
-            <strong id="command">
-                S
-            </strong>
+                </div>
 
-            <p id="commandText">
-                STOPPED
-            </p>
+                <div class="progress-track">
+                    <div
+                        class="progress-fill"
+                        id="progressBar"
+                        style="width: 0%;"
+                    ></div>
+                </div>
 
-        </div>
-
-
-        <div class="status-grid">
-
-            <div class="status-item">
-                <span>MODE</span>
-                <strong>AUTONOMOUS</strong>
             </div>
 
-            <div class="status-item">
-                <span>SPEED</span>
-                <strong id="speed">0%</strong>
+        </section>
+
+
+        <!-- =====================================================
+             AUTO DESTINATION CONTROL
+        ====================================================== -->
+        <section
+            class="destination-panel auto-control-panel card"
+            id="autoControlPanel"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+                    <div class="section-eyebrow">
+                        AUTONOMOUS NAVIGATION
+                    </div>
+
+                    <h2>Destination Control</h2>
+
+                    <p>
+                        Set the target waypoint and control the
+                        autonomous mission.
+                    </p>
+                </div>
+
+                <div class="destination-status">
+                    <span
+                        class="status-dot"
+                        id="destinationStatusDot"
+                    ></span>
+
+                    <span id="destinationStatus">
+                        NO DESTINATION
+                    </span>
+                </div>
+
             </div>
 
-            <div class="status-item">
-                <span>DISTANCE</span>
-                <strong id="distance">0.00 m</strong>
+
+            <div class="destination-controls">
+
+                <div class="destination-input-group">
+
+                    <label for="destinationX">
+                        TARGET X
+                    </label>
+
+                    <input
+                        type="number"
+                        id="destinationX"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value="8"
+                    >
+
+                </div>
+
+
+                <div class="destination-input-group">
+
+                    <label for="destinationY">
+                        TARGET Y
+                    </label>
+
+                    <input
+                        type="number"
+                        id="destinationY"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value="8"
+                    >
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="setDestination"
+                >
+                    SET WAYPOINT
+                </button>
+
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="startMission"
+                >
+                    START MISSION
+                </button>
+
+
+                <button
+                    type="button"
+                    class="danger-button"
+                    id="stopMission"
+                >
+                    STOP
+                </button>
+
             </div>
 
-            <div class="status-item">
-                <span>APRILTAG</span>
-                <strong id="tag">NOT DETECTED</strong>
+        </section>
+
+
+        <!-- =====================================================
+             MANUAL CONTROL
+        ====================================================== -->
+        <section
+            class="manual-control-panel card"
+            id="manualControlPanel"
+        >
+
+            <div class="panel-heading">
+
+                <div>
+                    <div class="section-eyebrow">
+                        DIRECT CONTROL
+                    </div>
+
+                    <h2>Manual Rover Control</h2>
+
+                    <p>
+                        Manual mode disables autonomous operation
+                        before accepting movement commands.
+                    </p>
+                </div>
+
+                <div class="manual-status-card">
+
+                    <span class="manual-status-label">
+                        COMMAND
+                    </span>
+
+                    <strong
+                        class="manual-status-command"
+                        id="manualCommandStatus"
+                    >
+                        STOP
+                    </strong>
+
+                </div>
+
             </div>
 
-        </div>
 
-    </section>
+            <div class="manual-control-layout">
+
+                <div class="manual-pad">
+
+                    <button
+                        type="button"
+                        class="manual-button forward"
+                        data-command="F"
+                        aria-label="Move forward"
+                    >
+                        <span>▲</span>
+                        <small>FORWARD</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="manual-button left"
+                        data-command="L"
+                        aria-label="Turn left"
+                    >
+                        <span>◀</span>
+                        <small>LEFT</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="manual-button stop"
+                        data-command="S"
+                        id="manualStop"
+                        aria-label="Stop rover"
+                    >
+                        <span>■</span>
+                        <small>STOP</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="manual-button right"
+                        data-command="R"
+                        aria-label="Turn right"
+                    >
+                        <span>▶</span>
+                        <small>RIGHT</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="manual-button reverse"
+                        data-command="B"
+                        aria-label="Move backward"
+                    >
+                        <span>▼</span>
+                        <small>REVERSE</small>
+                    </button>
+
+                </div>
 
 
-    <!-- OBSTACLES -->
+                <div class="manual-keyboard-info">
 
-    <section class="card obstacle-card">
+                    <div class="section-eyebrow">
+                        KEYBOARD CONTROL
+                    </div>
 
-        <div class="card-header">
+                    <div class="manual-key-grid">
 
-            <div>
-                <span class="eyebrow">SAFETY SYSTEM</span>
-                <h2>Obstacle Monitor</h2>
+                        <div class="key-hint">
+                            <kbd>W</kbd>
+                            <span>Forward</span>
+                        </div>
+
+                        <div class="key-hint">
+                            <kbd>A</kbd>
+                            <span>Left</span>
+                        </div>
+
+                        <div class="key-hint">
+                            <kbd>S</kbd>
+                            <span>Reverse</span>
+                        </div>
+
+                        <div class="key-hint">
+                            <kbd>D</kbd>
+                            <span>Right</span>
+                        </div>
+
+                        <div class="key-hint">
+                            <kbd>SPACE</kbd>
+                            <span>Emergency Stop</span>
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="manual-command-feedback"
+                        id="manualCommandFeedback"
+                    >
+                        MANUAL CONTROL READY
+                    </div>
+
+                </div>
+
             </div>
 
-            <span id="safetyStatus" class="safe-badge">
-                SAFE
-            </span>
-
-        </div>
+        </section>
 
 
-        <div class="obstacle-grid">
+        <!-- =====================================================
+             MAIN LIVE DATA GRID
+        ====================================================== -->
+        <section class="main-grid">
 
-            <div class="sensor">
-                <span>FRONT</span>
-                <strong id="front">--</strong>
-                <small>cm</small>
+
+            <!-- =================================================
+                 LIVE CAMERA
+            ================================================== -->
+            <article class="camera-card card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="section-eyebrow">
+                            VISION SYSTEM
+                        </div>
+
+                        <h2>Live Camera</h2>
+                    </div>
+
+                    <div class="live-indicator">
+                        <span class="status-dot"></span>
+                        LIVE
+                    </div>
+
+                </div>
+
+
+                <div class="camera-container">
+
+                    <img
+                        src="{{ url_for('video_feed') }}"
+                        class="camera-stream"
+                        alt="Live rover camera feed"
+                    >
+
+                    <div class="camera-overlay top-left">
+                        1280 × 720
+                    </div>
+
+                    <div class="camera-overlay top-right">
+                        <span class="status-dot"></span>
+                        VISION ACTIVE
+                    </div>
+
+                    <div class="camera-overlay bottom-left">
+                        LIVE CAMERA
+                    </div>
+
+                    <div class="camera-overlay bottom-right">
+                        SYNTAX ROVER
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- =================================================
+                 TELEMETRY
+            ================================================== -->
+            <article class="telemetry-card card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="section-eyebrow">
+                            ROVER TELEMETRY
+                        </div>
+
+                        <h2>System Data</h2>
+                    </div>
+
+                    <div
+                        class="telemetry-online"
+                        id="telemetryOnline"
+                    >
+                        ONLINE
+                    </div>
+
+                </div>
+
+
+                <div class="telemetry-grid">
+
+                    <!-- COMMAND -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            COMMAND
+                        </span>
+
+                        <strong id="command">
+                            —
+                        </strong>
+
+                        <small id="commandText">
+                            WAITING
+                        </small>
+
+                    </div>
+
+
+                    <!-- SPEED -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            SPEED
+                        </span>
+
+                        <strong id="speed">
+                            0.0
+                        </strong>
+
+                        <small>
+                            m/s
+                        </small>
+
+                    </div>
+
+
+                    <!-- DISTANCE -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            DISTANCE
+                        </span>
+
+                        <strong id="distance">
+                            0.0
+                        </strong>
+
+                        <small>
+                            m · ENCODER
+                        </small>
+
+                    </div>
+
+
+                    <!-- MOVEMENT -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            MOVEMENT
+                        </span>
+
+                        <strong id="movementStatus">
+                            STOPPED
+                        </strong>
+
+                        <small>
+                            WHEEL FEEDBACK
+                        </small>
+
+                    </div>
+
+
+                    <!-- APRILTAG -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            APRILTAG
+                        </span>
+
+                        <strong id="tag">
+                            NOT DETECTED
+                        </strong>
+
+                        <small id="tagId">
+                            ID —
+                        </small>
+
+                    </div>
+
+
+                    <!-- NAVIGATION -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            NAVIGATION
+                        </span>
+
+                        <strong id="navigationStatus">
+                            READY
+                        </strong>
+
+                        <small id="navigationDetail">
+                            WAITING
+                        </small>
+
+                    </div>
+
+
+                    <!-- SAFETY -->
+                    <div class="telemetry-item telemetry-safety">
+
+                        <span class="telemetry-label">
+                            SAFETY
+                        </span>
+
+                        <strong id="safetyStatus">
+                            CLEAR
+                        </strong>
+
+                        <small id="safetyDetail">
+                            SYSTEM NORMAL
+                        </small>
+
+                    </div>
+
+
+                    <!-- CONNECTION -->
+                    <div class="telemetry-item">
+
+                        <span class="telemetry-label">
+                            CONNECTION
+                        </span>
+
+                        <strong id="connectionState">
+                            ONLINE
+                        </strong>
+
+                        <small>
+                            ESP32 / FLASK
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =====================================================
+             SENSOR ROW
+        ====================================================== -->
+        <section class="sensor-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-eyebrow">
+                        OBSTACLE SENSING
+                    </div>
+
+                    <h2>Ultrasonic Sensors</h2>
+                </div>
+
+                <div
+                    class="safety-state-badge"
+                    id="obstacleState"
+                >
+                    PATH CLEAR
+                </div>
+
             </div>
 
-            <div class="sensor">
-                <span>LEFT</span>
-                <strong id="left">--</strong>
-                <small>cm</small>
+
+            <div class="sensor-grid">
+
+
+                <!-- FRONT -->
+                <article class="sensor-card card">
+
+                    <div class="sensor-header">
+
+                        <span class="sensor-name">
+                            FRONT
+                        </span>
+
+                        <span
+                            class="sensor-value"
+                            id="front"
+                        >
+                            —
+                        </span>
+
+                    </div>
+
+                    <div class="sensor-unit">
+                        cm
+                    </div>
+
+                    <div class="sensor-bar-track">
+
+                        <div
+                            class="sensor-bar"
+                            id="frontBar"
+                            style="width: 100%;"
+                        ></div>
+
+                    </div>
+
+                    <div
+                        class="sensor-state"
+                        id="frontState"
+                    >
+                        WAITING
+                    </div>
+
+                </article>
+
+
+                <!-- LEFT -->
+                <article class="sensor-card card">
+
+                    <div class="sensor-header">
+
+                        <span class="sensor-name">
+                            LEFT
+                        </span>
+
+                        <span
+                            class="sensor-value"
+                            id="left"
+                        >
+                            —
+                        </span>
+
+                    </div>
+
+                    <div class="sensor-unit">
+                        cm
+                    </div>
+
+                    <div class="sensor-bar-track">
+
+                        <div
+                            class="sensor-bar"
+                            id="leftBar"
+                            style="width: 100%;"
+                        ></div>
+
+                    </div>
+
+                    <div
+                        class="sensor-state"
+                        id="leftState"
+                    >
+                        WAITING
+                    </div>
+
+                </article>
+
+
+                <!-- RIGHT -->
+                <article class="sensor-card card">
+
+                    <div class="sensor-header">
+
+                        <span class="sensor-name">
+                            RIGHT
+                        </span>
+
+                        <span
+                            class="sensor-value"
+                            id="right"
+                        >
+                            —
+                        </span>
+
+                    </div>
+
+                    <div class="sensor-unit">
+                        cm
+                    </div>
+
+                    <div class="sensor-bar-track">
+
+                        <div
+                            class="sensor-bar"
+                            id="rightBar"
+                            style="width: 100%;"
+                        ></div>
+
+                    </div>
+
+                    <div
+                        class="sensor-state"
+                        id="rightState"
+                    >
+                        WAITING
+                    </div>
+
+                </article>
+
+
+                <!-- REAR -->
+                <article class="sensor-card card">
+
+                    <div class="sensor-header">
+
+                        <span class="sensor-name">
+                            REAR
+                        </span>
+
+                        <span
+                            class="sensor-value"
+                            id="rear"
+                        >
+                            —
+                        </span>
+
+                    </div>
+
+                    <div class="sensor-unit">
+                        cm
+                    </div>
+
+                    <div class="sensor-bar-track">
+
+                        <div
+                            class="sensor-bar"
+                            id="rearBar"
+                            style="width: 100%;"
+                        ></div>
+
+                    </div>
+
+                    <div
+                        class="sensor-state"
+                        id="rearState"
+                    >
+                        WAITING
+                    </div>
+
+                </article>
+
             </div>
 
-            <div class="sensor">
-                <span>RIGHT</span>
-                <strong id="right">--</strong>
-                <small>cm</small>
+        </section>
+
+
+        <!-- =====================================================
+             IR + MPU + ENCODER
+        ====================================================== -->
+        <section class="analysis-grid">
+
+
+            <!-- =================================================
+                 IR PATH FOLLOWING
+            ================================================== -->
+            <article class="ir-card card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="section-eyebrow">
+                            PATH FOLLOWING
+                        </div>
+
+                        <h2>IR Line Sensors</h2>
+                    </div>
+
+                    <div
+                        class="analysis-status"
+                        id="pathFollowingState"
+                    >
+                        WAITING
+                    </div>
+
+                </div>
+
+
+                <div class="ir-sensor-grid">
+
+                    <div class="ir-sensor">
+
+                        <span class="ir-label">
+                            LEFT
+                        </span>
+
+                        <strong id="irLeft">
+                            —
+                        </strong>
+
+                        <span
+                            class="ir-indicator"
+                            id="irLeftIndicator"
+                        ></span>
+
+                    </div>
+
+
+                    <div class="ir-sensor">
+
+                        <span class="ir-label">
+                            CENTER
+                        </span>
+
+                        <strong id="irCenter">
+                            —
+                        </strong>
+
+                        <span
+                            class="ir-indicator"
+                            id="irCenterIndicator"
+                        ></span>
+
+                    </div>
+
+
+                    <div class="ir-sensor">
+
+                        <span class="ir-label">
+                            RIGHT
+                        </span>
+
+                        <strong id="irRight">
+                            —
+                        </strong>
+
+                        <span
+                            class="ir-indicator"
+                            id="irRightIndicator"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="path-decision">
+
+                    <span class="telemetry-label">
+                        CURRENT PATH DECISION
+                    </span>
+
+                    <strong id="pathDecision">
+                        —
+                    </strong>
+
+                </div>
+
+            </article>
+
+
+            <!-- =================================================
+                 MPU ORIENTATION
+            ================================================== -->
+            <article class="orientation-card card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="section-eyebrow">
+                            ORIENTATION
+                        </div>
+
+                        <h2>MPU Heading</h2>
+                    </div>
+
+                    <div
+                        class="analysis-status"
+                        id="orientationState"
+                    >
+                        WAITING
+                    </div>
+
+                </div>
+
+
+                <div class="heading-display">
+
+                    <div class="heading-compass">
+
+                        <span class="compass-n">
+                            N
+                        </span>
+
+                        <span class="compass-e">
+                            E
+                        </span>
+
+                        <span class="compass-s">
+                            S
+                        </span>
+
+                        <span class="compass-w">
+                            W
+                        </span>
+
+                        <div
+                            class="compass-arrow"
+                            id="headingArrow"
+                        >
+                            ▲
+                        </div>
+
+                    </div>
+
+
+                    <div class="heading-data">
+
+                        <span class="telemetry-label">
+                            HEADING
+                        </span>
+
+                        <strong>
+                            <span id="heading">
+                                0
+                            </span>°
+                        </strong>
+
+                        <span
+                            class="orientation-label"
+                            id="orientation"
+                        >
+                            STRAIGHT
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <!-- =================================================
+                 ENCODER MOVEMENT
+            ================================================== -->
+            <article class="encoder-card card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="section-eyebrow">
+                            MOVEMENT FEEDBACK
+                        </div>
+
+                        <h2>Wheel Encoders</h2>
+                    </div>
+
+                    <div
+                        class="analysis-status"
+                        id="encoderState"
+                    >
+                        WAITING
+                    </div>
+
+                </div>
+
+
+                <div class="encoder-main">
+
+                    <div class="encoder-distance">
+
+                        <span class="telemetry-label">
+                            TRAVELLED DISTANCE
+                        </span>
+
+                        <strong>
+                            <span id="encoderDistance">
+                                0.0
+                            </span>
+                            <small>m</small>
+                        </strong>
+
+                    </div>
+
+
+                    <div class="encoder-status">
+
+                        <span class="telemetry-label">
+                            MOVEMENT
+                        </span>
+
+                        <strong id="encoderMovement">
+                            STOPPED
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="encoder-pulses">
+
+                    <div class="pulse-item">
+
+                        <span>
+                            LEFT PULSES
+                        </span>
+
+                        <strong id="encoderLeft">
+                            —
+                        </strong>
+
+                    </div>
+
+                    <div class="pulse-item">
+
+                        <span>
+                            RIGHT PULSES
+                        </span>
+
+                        <strong id="encoderRight">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =====================================================
+             APRILTAG / NAVIGATION
+        ====================================================== -->
+        <section class="navigation-status-panel card">
+
+            <div class="card-header">
+
+                <div>
+                    <div class="section-eyebrow">
+                        VISUAL NAVIGATION
+                    </div>
+
+                    <h2>AprilTag & Course Correction</h2>
+                </div>
+
+                <div
+                    class="navigation-badge"
+                    id="aprilTagNavigationState"
+                >
+                    NAVIGATING
+                </div>
+
             </div>
 
-            <div class="sensor">
-                <span>REAR</span>
-                <strong id="rear">--</strong>
-                <small>cm</small>
+
+            <div class="navigation-status-grid">
+
+                <div class="navigation-status-item">
+
+                    <span class="telemetry-label">
+                        TAG STATUS
+                    </span>
+
+                    <strong id="aprilTagDetected">
+                        NOT DETECTED
+                    </strong>
+
+                </div>
+
+
+                <div class="navigation-status-item">
+
+                    <span class="telemetry-label">
+                        TAG ID
+                    </span>
+
+                    <strong id="aprilTagId">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="navigation-status-item">
+
+                    <span class="telemetry-label">
+                        NAVIGATION STAGE
+                    </span>
+
+                    <strong id="navigationStage">
+                        START
+                    </strong>
+
+                </div>
+
+
+                <div class="navigation-status-item">
+
+                    <span class="telemetry-label">
+                        COURSE CORRECTION
+                    </span>
+
+                    <strong id="courseCorrectionStatus">
+                        NOT ACTIVE
+                    </strong>
+
+                </div>
+
             </div>
 
-        </div>
 
-    </section>
+            <div class="navigation-stage-track">
 
+                <div
+                    class="navigation-stage"
+                    id="navStep1"
+                >
+                    <span class="stage-number">01</span>
+                    <span class="stage-label">
+                        START
+                    </span>
+                </div>
 
-    <!-- DISTANCE GRAPH -->
+                <div
+                    class="navigation-stage"
+                    id="navStep2"
+                >
+                    <span class="stage-number">02</span>
+                    <span class="stage-label">
+                        PATH FOLLOWING
+                    </span>
+                </div>
 
-    <section class="card graph-card">
+                <div
+                    class="navigation-stage"
+                    id="navStep3"
+                >
+                    <span class="stage-number">03</span>
+                    <span class="stage-label">
+                        OBSTACLE AVOIDANCE
+                    </span>
+                </div>
 
-        <div class="card-header">
+                <div
+                    class="navigation-stage"
+                    id="navStep4"
+                >
+                    <span class="stage-number">04</span>
+                    <span class="stage-label">
+                        APRILTAG DETECTION
+                    </span>
+                </div>
 
-            <div>
-                <span class="eyebrow">ODOMETRY</span>
-                <h2>Distance Travelled</h2>
+                <div
+                    class="navigation-stage"
+                    id="navStep5"
+                >
+                    <span class="stage-number">05</span>
+                    <span class="stage-label">
+                        COURSE CORRECTION
+                    </span>
+                </div>
+
+                <div
+                    class="navigation-stage"
+                    id="navStep6"
+                >
+                    <span class="stage-number">06</span>
+                    <span class="stage-label">
+                        WAYPOINT REACHED
+                    </span>
+                </div>
+
             </div>
 
-            <div class="distance-value">
-                <strong id="distanceBig">0.00</strong>
-                <span>meters</span>
+        </section>
+
+
+        <!-- =====================================================
+             WAYPOINT / ROUTE VIEW
+        ====================================================== -->
+        <section class="route-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-eyebrow">
+                        NAVIGATION VIEW
+                    </div>
+
+                    <h2>Waypoint / Route View</h2>
+
+                    <p>
+                        Approximate mission progress — not real-time
+                        SLAM or localization.
+                    </p>
+                </div>
+
+                <div class="route-view-badge">
+                    ROUTE VIEW
+                </div>
+
             </div>
 
-        </div>
 
-        <canvas id="distanceChart"></canvas>
-
-    </section>
+            <div class="route-layout">
 
 
-    <!-- NAVIGATION -->
+                <!-- ROUTE MAP -->
+                <article class="rover-map-card card">
 
-    <section class="card navigation-card">
+                    <div class="map-header">
 
-        <div class="card-header">
+                        <div>
+                            <span class="telemetry-label">
+                                MISSION ROUTE
+                            </span>
 
-            <div>
-                <span class="eyebrow">AUTONOMOUS NAVIGATION</span>
-                <h2>Navigation Progress</h2>
+                            <strong>
+                                POINT A → POINT B
+                            </strong>
+                        </div>
+
+                        <div
+                            class="map-position-label"
+                            id="mapPositionLabel"
+                        >
+                            APPROXIMATE
+                        </div>
+
+                    </div>
+
+
+                    <div class="rover-map">
+
+                        <div class="map-grid"></div>
+
+                        <div class="map-axis-x"></div>
+                        <div class="map-axis-y"></div>
+
+
+                        <div
+                            class="route-line"
+                            id="routeLine"
+                        ></div>
+
+
+                        <div class="map-point start-point">
+
+                            <span class="map-point-dot"></span>
+
+                            <span class="map-point-label">
+                                START
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            class="map-point destination-point"
+                            id="destinationPoint"
+                        >
+
+                            <span class="map-point-dot"></span>
+
+                            <span class="map-point-label">
+                                WAYPOINT
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            class="rover-marker"
+                            id="roverMarker"
+                        >
+
+                            <div class="rover-marker-arrow">
+                                ▲
+                            </div>
+
+                            <span>
+                                ROVER
+                            </span>
+
+                        </div>
+
+
+                        <div class="map-legend">
+
+                            <div>
+                                <span class="legend-dot start"></span>
+                                START
+                            </div>
+
+                            <div>
+                                <span class="legend-dot rover"></span>
+                                ROVER
+                            </div>
+
+                            <div>
+                                <span class="legend-dot destination"></span>
+                                WAYPOINT
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <!-- DISTANCE GRAPH -->
+                <article class="chart-card card">
+
+                    <div class="card-header">
+
+                        <div>
+                            <div class="section-eyebrow">
+                                MOVEMENT HISTORY
+                            </div>
+
+                            <h2>Distance Travelled</h2>
+                        </div>
+
+                        <div class="chart-value">
+
+                            <strong id="distanceBig">
+                                0.0
+                            </strong>
+
+                            <span>
+                                m
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="chart-container">
+
+                        <canvas
+                            id="distanceChart"
+                            aria-label="Distance travelled graph"
+                        ></canvas>
+
+                    </div>
+
+                </article>
+
             </div>
 
-        </div>
+        </section>
 
 
-        <div class="navigation-flow">
+        <!-- =====================================================
+             EVENT LOG
+        ====================================================== -->
+        <section class="event-section">
 
-            <div class="nav-step active">
-                <span>01</span>
-                <p>START</p>
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-eyebrow">
+                        SYSTEM EVENTS
+                    </div>
+
+                    <h2>Event Log</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="clear-log-button"
+                    id="clearLog"
+                >
+                    CLEAR LOG
+                </button>
+
             </div>
 
-            <div class="nav-line"></div>
 
-            <div class="nav-step">
-                <span>02</span>
-                <p>LINE</p>
-            </div>
+            <article class="event-log-card card">
 
-            <div class="nav-line"></div>
+                <div
+                    class="event-log"
+                    id="eventLog"
+                >
 
-            <div class="nav-step">
-                <span>03</span>
-                <p>NAVIGATE</p>
-            </div>
+                    <div class="event-empty">
+                        Waiting for rover events...
+                    </div>
 
-            <div class="nav-line"></div>
+                </div>
 
-            <div class="nav-step">
-                <span>04</span>
-                <p>APRILTAG</p>
-            </div>
+            </article>
 
-            <div class="nav-line"></div>
-
-            <div class="nav-step">
-                <span>05</span>
-                <p>DESTINATION</p>
-            </div>
-
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- EVENT LOG -->
-
-    <section class="card log-card">
-
-        <div class="card-header">
-
-            <div>
-                <span class="eyebrow">SYSTEM EVENTS</span>
-                <h2>Event Log</h2>
-            </div>
-
-            <button onclick="clearLog()">
-                CLEAR
-            </button>
-
-        </div>
-
-        <div id="eventLog" class="event-log">
-
-            <div class="event">
-                <span>--:--:--</span>
-                <p>Waiting for rover connection...</p>
-            </div>
-
-        </div>
-
-    </section>
-
-</main>
+    </main>
 
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- =========================================================
+         CHART.JS
+    ========================================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script src="{{ url_for('static', filename='js/dashboard.js') }}">
-</script>
+
+    <!-- =========================================================
+         DASHBOARD JAVASCRIPT
+    ========================================================== -->
+    <script
+        src="{{ url_for('static', filename='js/dashboard.js') }}"
+        defer
+    ></script>
 
 </body>
-
 </html>
