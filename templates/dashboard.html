@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Syntax Squad | Autonomous Rover</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        <div class="brand-icon">S</div>
+
+        <div>
+            <h1>SYNTAX SQUAD</h1>
+            <p>VISION-ASSISTED AUTONOMOUS ROVER</p>
+        </div>
+    </div>
+
+    <div class="system-state">
+
+        <div class="status-dot"></div>
+
+        <div>
+            <strong id="systemStatus">SYSTEM ONLINE</strong>
+            <small>AUTONOMOUS MODE</small>
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="dashboard">
+
+    <!-- CAMERA -->
+
+    <section class="card camera-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">VISION SYSTEM</span>
+                <h2>Live Camera</h2>
+            </div>
+
+            <span class="live-badge">
+                ● LIVE
+            </span>
+
+        </div>
+
+        <div class="camera-container">
+
+            <div class="camera-placeholder">
+
+                <div class="camera-icon">◉</div>
+
+                <h3>VISION FEED</h3>
+
+                <p>
+                    OpenCV camera stream will appear here
+                </p>
+
+                <span>
+                    Waiting for camera connection
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ROVER STATUS -->
+
+    <section class="card status-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">ROVER</span>
+                <h2>System Status</h2>
+            </div>
+
+        </div>
+
+
+        <div class="command-display">
+
+            <span>CURRENT COMMAND</span>
+
+            <strong id="command">
+                S
+            </strong>
+
+            <p id="commandText">
+                STOPPED
+            </p>
+
+        </div>
+
+
+        <div class="status-grid">
+
+            <div class="status-item">
+                <span>MODE</span>
+                <strong>AUTONOMOUS</strong>
+            </div>
+
+            <div class="status-item">
+                <span>SPEED</span>
+                <strong id="speed">0%</strong>
+            </div>
+
+            <div class="status-item">
+                <span>DISTANCE</span>
+                <strong id="distance">0.00 m</strong>
+            </div>
+
+            <div class="status-item">
+                <span>APRILTAG</span>
+                <strong id="tag">NOT DETECTED</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- OBSTACLES -->
+
+    <section class="card obstacle-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">SAFETY SYSTEM</span>
+                <h2>Obstacle Monitor</h2>
+            </div>
+
+            <span id="safetyStatus" class="safe-badge">
+                SAFE
+            </span>
+
+        </div>
+
+
+        <div class="obstacle-grid">
+
+            <div class="sensor">
+                <span>FRONT</span>
+                <strong id="front">--</strong>
+                <small>cm</small>
+            </div>
+
+            <div class="sensor">
+                <span>LEFT</span>
+                <strong id="left">--</strong>
+                <small>cm</small>
+            </div>
+
+            <div class="sensor">
+                <span>RIGHT</span>
+                <strong id="right">--</strong>
+                <small>cm</small>
+            </div>
+
+            <div class="sensor">
+                <span>REAR</span>
+                <strong id="rear">--</strong>
+                <small>cm</small>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- DISTANCE GRAPH -->
+
+    <section class="card graph-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">ODOMETRY</span>
+                <h2>Distance Travelled</h2>
+            </div>
+
+            <div class="distance-value">
+                <strong id="distanceBig">0.00</strong>
+                <span>meters</span>
+            </div>
+
+        </div>
+
+        <canvas id="distanceChart"></canvas>
+
+    </section>
+
+
+    <!-- NAVIGATION -->
+
+    <section class="card navigation-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">AUTONOMOUS NAVIGATION</span>
+                <h2>Navigation Progress</h2>
+            </div>
+
+        </div>
+
+
+        <div class="navigation-flow">
+
+            <div class="nav-step active">
+                <span>01</span>
+                <p>START</p>
+            </div>
+
+            <div class="nav-line"></div>
+
+            <div class="nav-step">
+                <span>02</span>
+                <p>LINE</p>
+            </div>
+
+            <div class="nav-line"></div>
+
+            <div class="nav-step">
+                <span>03</span>
+                <p>NAVIGATE</p>
+            </div>
+
+            <div class="nav-line"></div>
+
+            <div class="nav-step">
+                <span>04</span>
+                <p>APRILTAG</p>
+            </div>
+
+            <div class="nav-line"></div>
+
+            <div class="nav-step">
+                <span>05</span>
+                <p>DESTINATION</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- EVENT LOG -->
+
+    <section class="card log-card">
+
+        <div class="card-header">
+
+            <div>
+                <span class="eyebrow">SYSTEM EVENTS</span>
+                <h2>Event Log</h2>
+            </div>
+
+            <button onclick="clearLog()">
+                CLEAR
+            </button>
+
+        </div>
+
+        <div id="eventLog" class="event-log">
+
+            <div class="event">
+                <span>--:--:--</span>
+                <p>Waiting for rover connection...</p>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}">
+</script>
+
+</body>
+
+</html>

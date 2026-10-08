@@ -1,0 +1,61 @@
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    color: #e8eef7;
+}
+header {
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111b2e;
+}
+header h1 { margin: 0; font-size: 22px; }
+#connection { padding: 7px 12px; border-radius: 20px; background: #27344d; }
+.dashboard {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    padding: 16px;
+}
+.card {
+    background: #121d31;
+    border: 1px solid #263651;
+    border-radius: 14px;
+    padding: 16px;
+}
+.card h2 { margin-top: 0; font-size: 17px; }
+.camera img {
+    width: 100%;
+    display: block;
+    border-radius: 10px;
+    background: #05080e;
+    min-height: 300px;
+    object-fit: contain;
+}
+.metric, .sensors > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid #263651;
+}
+.sensors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.sensors > div {
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #263651;
+    padding: 14px;
+    border-radius: 10px;
+}
+.log-card { min-height: 160px; }
+#eventLog { white-space: pre-line; line-height: 1.7; color: #b9c6d9; }
+canvas { max-height: 280px; }
+@media (max-width: 900px) {
+    .dashboard { grid-template-columns: 1fr; }
+}
