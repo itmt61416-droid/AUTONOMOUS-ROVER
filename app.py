@@ -1,4 +1,5 @@
-from flask import Flask, render_template, jsonify, Response
+from flask import Flask, render_template, jsonify
+from telemetry.telemetry import get_telemetry, update_telemetry
 import cv2
 
 app = Flask(__name__)
@@ -9,15 +10,27 @@ def dashboard():
 
 @app.route("/api/telemetry")
 def telemetry():
+    return jsonify(get_telemetry())
+
+
+@app.route("/api/telemetry/test", methods=["POST"])
+def test_telemetry():
+    update_telemetry(
+        connected=True,
+        status="NAVIGATING",
+        command="FORWARD",
+        speed=120,
+        distance=3.42,
+        front=28,
+        left=45,
+        right=18,
+        rear=60,
+        apriltag=True
+    )
+
     return jsonify({
-        "command": "S",
-        "distance": 0.0,
-        "front": 0,
-        "left": 0,
-        "right": 0,
-        "rear": 0,
-        "apriltag": None,
-        "status": "DISCONNECTED"
+        "success": True,
+        "telemetry": get_telemetry()
     })
 
 def generate_frames():
